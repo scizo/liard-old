@@ -154,6 +154,7 @@
 }
 
 - (void)sendStartMessage {
+    startMsgSent = TRUE;
     for (Player *p in players) {
         [p sendStartMessage];
     }
