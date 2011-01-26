@@ -76,6 +76,24 @@
     started = TRUE;
 }
 
+- (void)reset {
+    started = FALSE;
+    startMsgSent = FALSE;
+    totalDice = 0;
+    currentPlayer = 0;
+    lastPlayer = 0;
+    currentBidCount = 0;
+    currentBidValue = 0;
+    for (Player *p in waiters) {
+        [players addObject:p];
+    }
+    [waiters release];
+    waiters = [[NSMutableArray alloc] init];
+    for (Player *p in players) {
+        p.ready = FALSE;
+    }
+}
+
 - (int)connectionForIndex:(int)index fromIndex:(int)base {
     if (index < base) {
         index += [players count];
@@ -261,7 +279,7 @@
         for (Player *p in players) {
             [p sendWinner:[hasDice objectAtIndex:0]];
         }
-        // Restart Game
+        [self reset];
     }
     else {
         currentBidCount = 0;
