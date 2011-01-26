@@ -53,8 +53,10 @@
     for (Player *p in players) {
         if (!p.ready) {
             [waiters addObject:p];
-            [players removeObject:p];
         }
+    }
+    for (Player *p in waiters) {
+        [players removeObject:p];
     }
     // Send name commands to each player for each player
     for (Player *p in players) {
