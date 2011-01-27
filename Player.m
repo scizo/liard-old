@@ -38,7 +38,7 @@
         socket = [sock retain];
         socket.delegate = self;
         _tag = tag;
-        self.connected = TRUE;
+        self.connected = YES;
         dice_count = 0;
         self.dice = [NSArray array];
         [self read];
@@ -128,7 +128,7 @@
 }
 
 - (void)socketDidDisconnect:(GCDAsyncSocket *)sock withError:(NSError *)err {
-    self.connected = FALSE;
+    self.connected = NO;
     [self.game playerDidDisconnect:(Player *)self];
 }
 
@@ -204,7 +204,7 @@
         [self error:@"Can not ready while a game is in progress"];
         return;
     }
-    self.ready = TRUE;
+    self.ready = YES;
     [self.game playerIsReady:self];
 }
 
@@ -221,7 +221,7 @@
         [self error:@"No commands can be entered before your name is set"];
         return;
     }
-    self.ready = FALSE;
+    self.ready = NO;
 }
 
 - (void)who:(NSArray *)args {

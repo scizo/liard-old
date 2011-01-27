@@ -73,12 +73,12 @@
     }
     currentPlayer = rand() % [players count];
     [[players objectAtIndex:currentPlayer] yourTurn];
-    started = TRUE;
+    started = YES;
 }
 
 - (void)reset {
-    started = FALSE;
-    startMsgSent = FALSE;
+    started = NO;
+    startMsgSent = NO;
     totalDice = 0;
     currentPlayer = 0;
     lastPlayer = 0;
@@ -90,7 +90,7 @@
     [waiters release];
     waiters = [[NSMutableArray alloc] init];
     for (Player *p in players) {
-        p.ready = FALSE;
+        p.ready = NO;
     }
 }
 
@@ -172,7 +172,7 @@
 }
 
 - (void)sendStartMessage {
-    startMsgSent = TRUE;
+    startMsgSent = YES;
     for (Player *p in players) {
         [p sendStartMessage];
     }
@@ -186,7 +186,7 @@
 
 - (void)nextTurn {
     lastPlayer = currentPlayer;
-    while (TRUE) {
+    while (YES) {
         currentPlayer = (currentPlayer + 1) % [players count];
         if ([[[players objectAtIndex:currentPlayer] dice] count] > 0) break;
     }
@@ -194,19 +194,19 @@
 }
 
 - (BOOL)isValidBidCount:(int)count value:(int)value {
-    if (value < 1 || 6 < value) return FALSE;
+    if (value < 1 || 6 < value) return NO;
     int _count = count;
     int _currentBidCount = currentBidCount;
     if (value == 1) _count *= 2;
     if (currentBidValue == 1) _currentBidCount *= 2;
-    if (_count < _currentBidCount) return FALSE;
-    if (_count == _currentBidCount && value <= currentBidValue) return FALSE;
-    return TRUE;
+    if (_count < _currentBidCount) return NO;
+    if (_count == _currentBidCount && value <= currentBidValue) return NO;
+    return YES;
 }    
 
 - (BOOL)bidCount:(int)count value:(int)value fromPlayer:(Player *)player {
-    if (![[players objectAtIndex:currentPlayer] isEqual:player]) return FALSE;
-    if (![self isValidBidCount:count value:value]) return FALSE;
+    if (![[players objectAtIndex:currentPlayer] isEqual:player]) return NO;
+    if (![self isValidBidCount:count value:value]) return NO;
     currentBidCount = count;
     currentBidValue = value;
     for (Player *p in players) {
@@ -215,12 +215,12 @@
         }
     }
     [self nextTurn];
-    return TRUE;
+    return YES;
 }
 
 - (BOOL)challengeFromPlayer:(Player *)player {
-    if(![[players objectAtIndex:currentPlayer] isEqual:player]) return FALSE;
-    if(currentBidCount == 0) return FALSE;
+    if(![[players objectAtIndex:currentPlayer] isEqual:player]) return NO;
+    if(currentBidCount == 0) return NO;
     [self showResultsFromChallenger:player];
     int nextPlayer = -1;
     int diff = currentBidCount - [self countOfDiceWithValue:currentBidValue];
@@ -248,7 +248,7 @@
         nextPlayer = currentPlayer;
     }
     [self resetRoundNextPlayer:nextPlayer];
-    return TRUE;
+    return YES;
 }
 
 - (int)countOfDiceWithValue:(int)value {

@@ -1461,10 +1461,13 @@ enum GCDAsyncSocketConfig
 		return NO;
 	}
 	
-	// Prevent SIGPIPE signals
-	
+#ifdef SO_NOSIGPIPE
+// Prevent SIGPIPE signals
+// linux does not define SO_NOSIGPIPE so this must be done on a per write basis
+// with MSG_NOSIGNAL
 	int nosigpipe = 1;
 	setsockopt(childSocketFD, SOL_SOCKET, SO_NOSIGPIPE, &nosigpipe, sizeof(nosigpipe));
+#endif
 	
 	// Notify delegate
 	
@@ -1712,20 +1715,23 @@ enum GCDAsyncSocketConfig
 	
 	NSData *address4 = nil;
 	NSData *address6 = nil;
-	
-	
+
 	if ([host isEqualToString:@"localhost"] || [host isEqualToString:@"loopback"])
 	{
 		// Use LOOPBACK address
 		struct sockaddr_in nativeAddr;
+#ifndef GNUSTEP
 		nativeAddr.sin_len         = sizeof(struct sockaddr_in);
+#endif
 		nativeAddr.sin_family      = AF_INET;
 		nativeAddr.sin_port        = htons(port);
 		nativeAddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 		memset(&(nativeAddr.sin_zero), 0, sizeof(nativeAddr.sin_zero));
 		
 		struct sockaddr_in6 nativeAddr6;
+#ifndef GNUSTEP
 		nativeAddr6.sin6_len       = sizeof(struct sockaddr_in6);
+#endif
 		nativeAddr6.sin6_family    = AF_INET6;
 		nativeAddr6.sin6_port      = htons(port);
 		nativeAddr6.sin6_flowinfo  = 0;
@@ -1998,11 +2004,14 @@ enum GCDAsyncSocketConfig
 		return;
 	}
 	
-	// Prevent SIGPIPE signals
-	
+#ifdef SO_NOSIGPIPE
+// Prevent SIGPIPE signals
+// linux does not define SO_NOSIGPIPE so this must be done on a per write basis
+// with MSG_NOSIGNAL
 	int nosigpipe = 1;
-	setsockopt(socketFD, SOL_SOCKET, SO_NOSIGPIPE, &nosigpipe, sizeof(nosigpipe));
-	
+	setsockopt(childSocketFD, SOL_SOCKET, SO_NOSIGPIPE, &nosigpipe, sizeof(nosigpipe));
+#endif
+
 	// Setup our read/write sources.
 	
 	[self setupReadAndWriteSourcesForNewlyConnectedSocket:socketFD];
@@ -2370,19 +2379,17 @@ enum GCDAsyncSocketConfig
 	return [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:userInfo];
 }
 
-- (NSError *)sslError:(OSStatus)ssl_error
-{
-	NSString *msg = @"Error code definition can be found in Apple's SecureTransport.h";
-	NSDictionary *userInfo = [NSDictionary dictionaryWithObject:msg forKey:NSLocalizedRecoverySuggestionErrorKey];
-	
-	return [NSError errorWithDomain:@"kCFStreamErrorDomainSSL" code:ssl_error userInfo:userInfo];
-}
+//- (NSError *)sslError:(OSStatus)ssl_error
+//{
+//	NSString *msg = @"Error code definition can be found in Apple's SecureTransport.h";
+//	NSDictionary *userInfo = [NSDictionary dictionaryWithObject:msg forKey:NSLocalizedRecoverySuggestionErrorKey];
+//	
+//	return [NSError errorWithDomain:@"kCFStreamErrorDomainSSL" code:ssl_error userInfo:userInfo];
+//}
 
 - (NSError *)connectTimeoutError
 {
-	NSString *errMsg = NSLocalizedStringWithDefaultValue(@"GCDAsyncSocketConnectTimeoutError",
-	                                                     @"GCDAsyncSocket", [NSBundle mainBundle],
-	                                                     @"Attempt to connect to host timed out", nil);
+	NSString *errMsg = @"Attempt to connect to host timed out";
 	
 	NSDictionary *userInfo = [NSDictionary dictionaryWithObject:errMsg forKey:NSLocalizedDescriptionKey];
 	
@@ -2394,9 +2401,7 @@ enum GCDAsyncSocketConfig
 **/
 - (NSError *)readMaxedOutError
 {
-	NSString *errMsg = NSLocalizedStringWithDefaultValue(@"GCDAsyncSocketReadMaxedOutError",
-														 @"GCDAsyncSocket", [NSBundle mainBundle],
-														 @"Read operation reached set maximum length", nil);
+	NSString *errMsg = @"Read operation reached set maximum length";
 	
 	NSDictionary *info = [NSDictionary dictionaryWithObject:errMsg forKey:NSLocalizedDescriptionKey];
 	
@@ -2408,9 +2413,7 @@ enum GCDAsyncSocketConfig
 **/
 - (NSError *)readTimeoutError
 {
-	NSString *errMsg = NSLocalizedStringWithDefaultValue(@"GCDAsyncSocketReadTimeoutError",
-	                                                     @"GCDAsyncSocket", [NSBundle mainBundle],
-	                                                     @"Read operation timed out", nil);
+	NSString *errMsg = @"Read operation timed out";
 	
 	NSDictionary *userInfo = [NSDictionary dictionaryWithObject:errMsg forKey:NSLocalizedDescriptionKey];
 	
@@ -2422,9 +2425,7 @@ enum GCDAsyncSocketConfig
 **/
 - (NSError *)writeTimeoutError
 {
-	NSString *errMsg = NSLocalizedStringWithDefaultValue(@"GCDAsyncSocketWriteTimeoutError",
-	                                                     @"GCDAsyncSocket", [NSBundle mainBundle],
-	                                                     @"Write operation timed out", nil);
+	NSString *errMsg = @"Write operation timed out";
 	
 	NSDictionary *userInfo = [NSDictionary dictionaryWithObject:errMsg forKey:NSLocalizedDescriptionKey];
 	
@@ -2433,9 +2434,7 @@ enum GCDAsyncSocketConfig
 
 - (NSError *)connectionClosedError
 {
-	NSString *errMsg = NSLocalizedStringWithDefaultValue(@"GCDAsyncSocketClosedError",
-	                                                     @"GCDAsyncSocket", [NSBundle mainBundle],
-	                                                     @"Socket closed by remote peer", nil);
+	NSString *errMsg = @"Socket closed by remote peer";
 	
 	NSDictionary *userInfo = [NSDictionary dictionaryWithObject:errMsg forKey:NSLocalizedDescriptionKey];
 	
@@ -2879,7 +2878,9 @@ enum GCDAsyncSocketConfig
 		struct sockaddr_in nativeAddr4;
 		memset(&nativeAddr4, 0, sizeof(nativeAddr4));
 		
+#ifndef GNUSTEP
 		nativeAddr4.sin_len         = sizeof(nativeAddr4);
+#endif
 		nativeAddr4.sin_family      = AF_INET;
 		nativeAddr4.sin_port        = htons(port);
 		nativeAddr4.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -2887,7 +2888,9 @@ enum GCDAsyncSocketConfig
 		struct sockaddr_in6 nativeAddr6;
 		memset(&nativeAddr6, 0, sizeof(nativeAddr6));
 		
+#ifndef GNUSTEP
 		nativeAddr6.sin6_len       = sizeof(nativeAddr6);
+#endif
 		nativeAddr6.sin6_family    = AF_INET6;
 		nativeAddr6.sin6_port      = htons(port);
 		nativeAddr6.sin6_addr      = in6addr_any;
@@ -2902,7 +2905,9 @@ enum GCDAsyncSocketConfig
 		struct sockaddr_in nativeAddr4;
 		memset(&nativeAddr4, 0, sizeof(nativeAddr4));
 		
+#ifndef GNUSTEP
 		nativeAddr4.sin_len         = sizeof(struct sockaddr_in);
+#endif
 		nativeAddr4.sin_family      = AF_INET;
 		nativeAddr4.sin_port        = htons(port);
 		nativeAddr4.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
@@ -2910,7 +2915,9 @@ enum GCDAsyncSocketConfig
 		struct sockaddr_in6 nativeAddr6;
 		memset(&nativeAddr6, 0, sizeof(nativeAddr6));
 		
+#ifndef GNUSTEP
 		nativeAddr6.sin6_len       = sizeof(struct sockaddr_in6);
+#endif
 		nativeAddr6.sin6_family    = AF_INET6;
 		nativeAddr6.sin6_port      = htons(port);
 		nativeAddr6.sin6_addr      = in6addr_loopback;
@@ -3850,9 +3857,9 @@ enum GCDAsyncSocketConfig
 		
 		shouldDisconnect = YES;
 		
-		#if !TARGET_OS_IPHONE
-			error = [self sslError:errSSLClosedAbort];
-		#endif
+		//#if !TARGET_OS_IPHONE
+		//	error = [self sslError:errSSLClosedAbort];
+		//#endif
 	}
 	else if (config & kAllowHalfDuplexConnection)
 	{
@@ -4276,7 +4283,16 @@ enum GCDAsyncSocketConfig
 //		else
     if (1)
 		{
+#ifdef SO_NOSIGPIPE
 			ssize_t result = write(socketFD, buffer, (size_t)bytesToWrite);
+#else
+// SIGPIPE must be suppressed on a per write basis
+#ifdef MSG_NOSIGNAL
+			ssize_t result = send(socketFD, buffer, (size_t)bytesToWrite, MSG_NOSIGNAL);
+#else
+#error error: There is currently no implementation for an os without SO_NOSIGPIPE or MSG_NOSIGNAL
+#endif
+#endif
 			LogVerbose(@"wrote to socket = %i", (int)result);
 			
 			// Check results

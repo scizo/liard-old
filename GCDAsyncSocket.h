@@ -11,6 +11,11 @@
 #import <Foundation/Foundation.h>
 #import <dispatch/dispatch.h>
 
+#ifdef GNUSTEP
+#define UInt16 u_int16_t
+#define Byte u_int8_t
+#endif
+
 @class GCDAsyncReadPacket;
 @class GCDAsyncWritePacket;
 

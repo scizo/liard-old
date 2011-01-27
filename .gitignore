@@ -6,3 +6,4 @@ build/
 *.pbxuser
 *.perspective
 *.perspectivev3
+obj/
